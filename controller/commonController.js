@@ -1,40 +1,47 @@
 const User = require("../models/userSchema");
 const Farmer = require("../models/farmerSchema");
 const Admin = require("../models/adminSchema");
+const jwt =require('jsonwebtoken')
 
 const object = {
   postSignup: async (req, res) => {
     const { name, email, password, role } = req.body;
     console.log(req.body);
-    if (role == "user") {
-      const newUser = new User({
-        name: name,
-        email: email,
-        password: password,
-      });
+    try {
+      let newUser;
+      if (role === "user") {
+        newUser = new User({
+          name: name,
+          email: email,
+          password: password,
+        });
+      } else if (role === "farmer") {
+        newUser = new Farmer({
+          name: name,
+          email: email,
+          password: password,
+        });
+      } else if (role === "admin") {
+        newUser = new Admin({
+          name: name,
+          email: email,
+          password: password,
+        });
+      } else {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      
       await newUser.save();
-      res.send({ hello: " helo user data recieved" });
-    } else if (role == "farmer") {
-      const newFarmer = new Farmer({
-        name: name,
-        email: email,
-        password: password,
-      });
-      await newFarmer.save();
-      res.send({ hello: "helo farmer data recieved" });
+
+      // Generate JWT
+      const token = jwt.sign({ email: newUser.email, role: newUser.role }, 'your-secret-key');
+      
+      res.status(200).json({ message: "Signup successful", token: token });
+    } catch (error) {
+      console.error("Error during signup:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    //  else if (role == "admin") {
-    //   const newAdmin = new Admin({
-    //     name: name,
-    //     email: email,
-    //     password: password,
-    //   });
-    //   await newAdmin.save();
-    //   res.send({ hello: "hai admin data recieved" });
-    // }
-    else {
-      console.log("error occured");
-    }
+
   },
   postLogin: async (req, res) => {
     const { email, password, role } = req.body;
