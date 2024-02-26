@@ -8,13 +8,15 @@ const object = {
     console.log('files:',req.file.location);
     console.log("Form data:", req.body);
     const url = req.file.location 
+    // const farmerid =
 
       let newProduct = new Products({
         name: name,
         description: description,
         quantity: quantity,
         price: price,
-        image: url
+        image: url,
+        farmerid:farmerid
       });
 
       await newProduct.save();

@@ -21,6 +21,9 @@ const AddProduct = new Schema({
     type: String,
     required: true,
   },
+  farmerid:{
+    type:String
+  }
 });
 
 module.exports = mongoose.model("products", AddProduct);
