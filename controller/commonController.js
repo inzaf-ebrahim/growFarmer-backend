@@ -60,10 +60,11 @@ const object = {
       res.status(500).json({ message: "Internal server error" });
     }
   },
-  postLogin: async (req, res) => {
+  Login: async (req, res) => {
     const { email, password, role } = req.body;
     try {
       if (role == "user") {
+        console.log("user is here");
         const existingUser = await User.findOne({ email: email });
         if (!existingUser) {
           return res.status(400).json({ message: "User not found" });
@@ -71,8 +72,13 @@ const object = {
         if (existingUser.password !== password) {
           return res.status(400).send({ message: "Invalid password" });
         }
-        res.status(200).json({ message: "Login successful" });
+        const secret = process.env.ACCESS_TOKEN;
+        const token = jwt.sign({ id: existingUser._id }, secret, {
+          expiresIn: "10d",
+        });
+        res.status(200).json({ message: "Login successful", token: token });
       } else if (role == "farmer") {
+        console.log("farmer is here");
         const existingFarmer = await Farmer.findOne({ email: email });
         if (!existingFarmer) {
           return res.status(400).json({ message: "Farmer not found" });
@@ -80,16 +86,26 @@ const object = {
         if (existingFarmer.password !== password) {
           return res.status(400).send({ message: "Invalid password" });
         }
-        res.status(200).json({ message: "Login successful" });
+        const secret = process.env.ACCESS_TOKEN;
+        const token = jwt.sign({ id: existingFarmer._id }, secret, {
+          expiresIn: "10d",
+        });
+        res.status(200).json({ message: "Login successful", token: token });
       } else if (role == "admin") {
+        console.log("admin is here");
         const existingAdmin = await Admin.findOne({ email: email });
+        console.log(existingAdmin);
         if (!existingAdmin) {
           return res.status(400).json({ message: "Admin not found" });
         }
         if (existingAdmin.password !== password) {
           return res.status(400).send({ message: "Invalid password" });
         }
-        res.status(200).json({ message: "Login successful" });
+        const secret = process.env.ACCESS_TOKEN;
+        const token = jwt.sign({ id: existingAdmin._id }, secret, {
+          expiresIn: "10d",
+        });
+        res.status(200).json({ message: "Login successful", token: token });
       } else {
         console.log("login error");
       }

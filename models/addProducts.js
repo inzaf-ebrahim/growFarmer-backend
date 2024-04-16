@@ -23,6 +23,7 @@ const AddProduct = new Schema({
   },
   farmerid:{
     type: mongoose.Schema.Types.ObjectId,
+    required:true
   }
 });
 

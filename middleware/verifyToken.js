@@ -11,7 +11,7 @@ const authenticateToken = async (req, res, next) => {
       tokenWithoutBearer,
       process.env.ACCESS_TOKEN
     );
-    console.log(`tok${decodedToken}`);
+    console.log(`tok${decodedToken.id}`);
     if (!decodedToken) {
       return res.status(401).json({ error: "Invalid token" });
     }
