@@ -2,6 +2,9 @@ const User = require("../models/userSchema");
 const Farmer = require("../models/farmerSchema");
 const Admin = require("../models/adminSchema");
 const jwt = require("jsonwebtoken");
+const Cart = require("../models/cartSchema");
+const { use } = require("../routes/commonRouter");
+const Products = require("../models/addProducts");
 
 const object = {
   Signup: async (req, res) => {
@@ -22,7 +25,7 @@ const object = {
           password: password,
         });
         await newUser.save();
-        const payload = { _id: newUser._id, email: newUser.email, role: role };
+        const payload = { id: newUser._id, email: newUser.email, role: role };
         const secret = process.env.ACCESS_TOKEN;
         const token = jwt.sign(payload, secret);
         res
@@ -41,7 +44,7 @@ const object = {
           password: password,
         });
         await newUser.save();
-        const payload = { _id: newUser._id, email: newUser.email, role: role };
+        const payload = { id: newUser._id, email: newUser.email, role: role };
         const secret = process.env.ACCESS_TOKEN;
         const token = jwt.sign(payload, secret);
         res
@@ -111,6 +114,94 @@ const object = {
       }
     } catch (error) {
       console.error("Error during login:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+  addToCart: async (req, res) => {
+    const productId = req.body.id;
+    const userId = req.decodedToken.id;
+  
+    try {
+      const existingCart = await Cart.findOne({ userId: userId });
+  
+      if (existingCart) {
+        // Check if the product already exists in the cart
+        const existingProduct = existingCart.productIds.find(id => id.toString() === productId); // Handle potential string/object ID comparison
+  
+        if (existingProduct) {
+          return res.status(400).json({ message: "Product already exists in your cart" });
+        } else {
+          existingCart.productIds.push(productId);
+          await existingCart.save();
+          res.status(200).json({ message: "Product added to your cart successfully", existingCart });
+        }
+      } else {
+        const newItem = new Cart({
+          userId,
+          productIds: [productId],
+        });
+        await newItem.save();
+        res.status(200).json({ message: "Your cart item saved successfully", newItem });
+      }
+    } catch (error) {
+      console.error("Error during add to cart:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+  
+  cartDetails: async (req, res) => {
+    const userId = req.decodedToken.id;
+    try {
+      const usercart = await Cart.find({ userId: userId });
+
+      if (usercart) {
+        res.status(200).json({ message: "Cart items", usercart });
+      } else {
+        res.status(200).json({ message: "Your cart is currently empty" });
+      }
+    } catch (error) {
+      console.error("Error during :", error);
+      res.status(500).json({ message: "Error retrieving cart details" }); // Handle error in response
+    }
+  },
+  ProductDetails: async (req, res) => {
+    const Id = req.params.Id;
+    console.log("product id is:", Id);
+    try {
+      const ProductDetails = await Products.findById(Id);
+      console.log(ProductDetails, "this is the details");
+      res
+        .status(200)
+        .json({ message: "details of each product", ProductDetails });
+    } catch (error) {
+      console.error("Error during :", error);
+    }
+  },
+  removeProduct: async (req, res) => {
+    try {
+      const cartId = req.body.cartId; 
+      const Id = req.params.Id;
+
+      if (!Id || !cartId) {
+        return res
+          .status(400)
+          .json({ message: "Missing required fields (Id, cartId)" });
+      }
+
+      // Use findByIdAndUpdate with $pull operator to remove product from cart
+      const updatedCart = await Cart.findByIdAndUpdate(cartId, {
+        $pull: { productIds: Id },
+      });
+
+      if (!updatedCart) {
+        return res
+          .status(404)
+          .json({ message: "Cart not found or product already removed" });
+      }
+
+      res.status(200).json({ message: "Product removed successfully" });
+    } catch (error) {
+      console.error(error);
       res.status(500).json({ message: "Internal server error" });
     }
   },
