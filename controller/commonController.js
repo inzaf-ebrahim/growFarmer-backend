@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const Cart = require("../models/cartSchema");
 const { use } = require("../routes/commonRouter");
 const Products = require("../models/addProducts");
+const Razorpay = require('razorpay');
+const { log } = require("console");
 
 const object = {
   Signup: async (req, res) => {
@@ -205,5 +207,59 @@ const object = {
       res.status(500).json({ message: "Internal server error" });
     }
   },
+  razorpayorder:async (req,res)=>{
+    try {
+
+      const key_id =process.env.RAZORPAY_KEY_ID
+      const key_secret =process.env.RAZORPAY_KEY_SECRET
+
+      log
+      var razorpay = new Razorpay({
+        key_id: key_id,
+        key_secret: key_secret,
+      });
+      
+      console.log(razorpay,'kee');
+      
+      const amount = req.body.amount;
+      console.log(amount,'amount isthis');
+      const receiptId = `receipt_${Math.random().toString(36).substring(2, 15)}`;
+      const options = {
+        amount,
+        currency: 'INR',
+        receipt: receiptId,
+        payment_capture: 0 // Set to 0 for test mode (change to 1 for live)
+      };
+  
+      const order = await razorpay.orders.create(options);
+      res.json({message:"here is order",order});
+    } catch (error) {
+      console.error('Error creating Razorpay order:', error);
+      res.status(500).json({ message: 'Error creating order' });
+    }
+  },
+  verifyPayment:async(req,res)=>{
+    try {
+      const { orderId, signature, ...data } = req.body; // Destructure data
+  
+      const crypto = require('crypto'); // Import crypto for signature verification
+  
+      const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_SECRET)
+        .update(`<span class="math-inline">\{orderId\}\|</span>{data.paymentId}`)
+        .digest('hex');
+  
+      if (expectedSignature === signature) {
+        console.log('Payment signature verified!');
+        // Handle successful payment logic (e.g., update order status, send confirmation email)
+        res.json({ success: true });
+      } else {
+        console.error('Payment signature verification failed!');
+        res.json({ success: false, message: 'Payment verification failed' });
+      }
+    } catch (error) {
+      console.error('Error verifying payment signature:', error);
+      res.status(500).json({ message: 'Error verifying payment' });
+    }
+  }
 };
 module.exports = object;

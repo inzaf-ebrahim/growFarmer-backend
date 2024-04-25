@@ -86,8 +86,6 @@ const object = {
     try {
       const {name, description, quantity, price} = req.body
       console.log(name, description, quantity, price)
-      // const {name, description, quantity, price} = req.body
-      // console.log(name, description,quantity, price)
       console.log("files:", req.file.location);
       const image = req.file.location
       const id = req.params.Id;
