@@ -219,7 +219,7 @@ const object = {
         key_secret: key_secret,
       });
       
-      console.log(razorpay,'kee');
+      // console.log(razorpay,'kee');
       
       const amount = req.body.amount;
       console.log(amount,'amount isthis');
@@ -238,19 +238,22 @@ const object = {
       res.status(500).json({ message: 'Error creating order' });
     }
   },
-  verifyPayment:async(req,res)=>{
+  verifyPayment: async (req, res) => {
     try {
-      const { orderId, signature, ...data } = req.body; // Destructure data
+      const { orderId, signature, ...data } = req.body;
   
-      const crypto = require('crypto'); // Import crypto for signature verification
+      if (!orderId || !data.paymentId) {
+        return res.status(400).json({ message: 'Missing required payment data' });
+      }
   
+      const crypto = require('crypto');
       const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_SECRET)
-        .update(`<span class="math-inline">\{orderId\}\|</span>{data.paymentId}`)
+        .update(orderId + '|' + data.paymentId)
         .digest('hex');
   
       if (expectedSignature === signature) {
         console.log('Payment signature verified!');
-        // Handle successful payment logic (e.g., update order status, send confirmation email)
+        // Handle successful payment logic
         res.json({ success: true });
       } else {
         console.error('Payment signature verification failed!');

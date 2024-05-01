@@ -86,7 +86,7 @@ const object = {
     try {
       const {name, description, quantity, price} = req.body
       console.log(name, description, quantity, price)
-      console.log("files:", req.file.location);
+      console.log("files:", req.file);
       const image = req.file.location
       const id = req.params.Id;
       const existingProduct = await Products.findByIdAndUpdate(id, {name: name, description: description, quantity: quantity, price: price,image:image}, { new: true });
